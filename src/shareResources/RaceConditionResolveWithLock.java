@@ -2,37 +2,57 @@ package shareResources;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-class states
+class EvenGenerator1
 {
-	private int states1 = 1;
-	private int states2 = 1;
+	private int currentEvenNumber = 1;
+	private boolean cancel;
+	private Lock lock = new ReentrantLock();
 	
 	public boolean isCanceled()
 	{
-		return states1 != states2;
+		return cancel == true;
 	}
 	
-	public void nextStates()
+	public int nextInt()
 	{
-		states1++;
-		System.out.println("states1 is " + states1);
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		lock.lock();
+		try
+		{
+			currentEvenNumber++;
+			try 
+			{
+				Thread.sleep(100);
+			} 
+			catch (InterruptedException e) 
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			currentEvenNumber++;
+			System.out.println("value is " + currentEvenNumber);
+			return currentEvenNumber;
 		}
-		states2++;
-		System.out.println("states2 is " + states2);
+		finally
+		{
+			lock.unlock();
+		}
+		
+	}
+	
+	public void cancel()
+	{
+		this.cancel = true;
 	}
 }
 
 class Test1 implements Runnable
 {
 
-	private states st;
-	public Test1(states st)
+	private  EvenGenerator1 st;
+	public Test1(EvenGenerator1 st)
 	{
 		this.st = st;
 	}
@@ -40,20 +60,24 @@ class Test1 implements Runnable
 	@Override
 	public void run() 
 	{
-		System.out.println("run");
 		while(!st.isCanceled())		
 		{			
-			System.out.println("not canceled");
-			st.nextStates();
+			int k = st.nextInt();
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) 
 			{
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			if(k % 2 == 0)
+			{
+				st.cancel();
+				System.out.println("cancel");
+			}
+			
+			
 		}
-		System.out.println("canceled");
+		
 	}
 	
 }
@@ -63,13 +87,14 @@ public class RaceConditionResolveWithLock
 	public static void main(String[] args)
 	{
 		ExecutorService exec = Executors.newCachedThreadPool();
-		states s = new states();
+		EvenGenerator1 s = new EvenGenerator1();
 		Test1 t = new Test1(s);
 		
 		for(int i = 0; i < 10; i++)
 		{
 			exec.execute(t);
 		}
+		//exec.shutdown();
 	}
 	
 }
