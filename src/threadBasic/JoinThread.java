@@ -43,12 +43,12 @@ public class JoinThread
 		Thread t1 = new Thread(run1);
 		Thread t2 = new Thread(run2);
 		t1.start();
-//		try {
-//			//t1.join();
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		try {
+			t1.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		t2.start();
 	}
 }
